@@ -1,0 +1,287 @@
+LEKAR HEADER FILE:::
+#pragma once
+class Lekar
+{
+     char name[20];
+     char specialty[20];
+     int cabinet;
+     int hours[10];
+public:
+     Lekar();
+     Lekar(char Name[], char Specialty[], int Cabinet, int            Hours[]);
+     void print();
+ int *GetHours()
+{
+     return hours;
+}
+};
+------------------------------------------------------------------------------------------------------------
+
+LEKAR CPP:::
+#include "Lekar.h"
+#include <iostream>
+#include <string.h>
+
+Lekar::Lekar()
+{
+     name[0] = 0;
+     specialty[0] = 0;
+     cabinet = 0;
+     int i;
+     for (i = 0; i < 10; i++)
+     {
+          hours[i] = 0;
+     }
+}
+
+Lekar::Lekar(char Name[], char Specialty[], int Cabinet, int Hours[])
+{
+     int i;
+     strcpy_s(name, 20, Name);
+     strcpy_s(specialty, 20, Specialty);
+     cabinet = Cabinet;
+     for (i = 0; i < 10; i++)
+     {
+          hours[i] = Hours[i];
+     }
+}
+
+void Lekar::print()
+{
+     int i;
+
+     printf_s("\nDr Name: %s, Speciality: %s, Cabinet: %d\n", name, specialty, cabinet);
+     for (i = 0; i < 10; ++i)
+     {
+          if (hours[i] == 1)
+          printf_s("Time %d: not free; ", i+7);
+     else
+          printf_s("Time %d: free; ", i+7);
+     }
+
+}
+
+------------------------------------------------------------------------------------------------------------
+
+APPOINTMENT HEADER FILE:::
+
+#pragma once
+#include "Lekar.h"
+#include <string.h>
+
+class appointment
+{
+     char patient_name[20];
+     char egn[11];
+     Lekar *lekar;
+     int examination; //zapazen chas
+     int ZdravnaKasa; //flag ukazvasht dali pregledut e po zdravna kasa
+     float payment;
+public:
+     appointment();
+     appointment(char EGN[], char Patient_name[]);
+     void print();
+     void makeAppointment(int NZOK,Lekar *doc);
+     void SetNameEGN(char name[],char EGN[]) {
+     strcpy_s(patient_name, 20, name);
+     strcpy_s(egn, 11, EGN);
+     }
+     void SetExamination(int exam)
+     {
+     examination = exam;
+     }
+     void SetLekar(Lekar* le)
+     {
+     lekar = le;
+     }
+     float GetPayment()
+     {
+     return payment;
+     }
+};
+
+--------------------------------------------------------------------------------------------------------------
+
+APPOINTMENT CPP:::
+
+#include "appointment.h"
+#include "Lekar.h"
+#include <iostream>
+#include <string.h>
+
+appointment::appointment()
+{
+     patient_name[0] = 0;
+     egn[0] = 0;
+     lekar = NULL;
+     examination = 0; //zapazen chas
+     ZdravnaKasa = 0; //flag ukazvasht dali pregledut e po      zdravna kasa
+     payment = 0.0;
+}
+
+appointment::appointment(char EGN[], char Patient_name[])
+{
+     lekar = NULL;
+     examination = 0; //zapazen chas
+     ZdravnaKasa = 0; //flag ukazvasht dali pregledut e po zdravna kasa
+     payment = 0.0;
+     strcpy_s(patient_name, 20, Patient_name);
+     strcpy_s(egn, 11, EGN);
+}
+
+void appointment::print()
+{
+     printf_s("Patient: %s, ", patient_name);
+     printf_s("EGN: %s, ", egn);
+     lekar->print();
+     printf_s("Appointment time: %d, ", examination);
+     if (ZdravnaKasa == 1)
+     printf("Health insurance: yes, ");
+     else printf("Health insurance: no, ");
+     printf_s("Price: %.2f;\n\n", payment);
+}
+
+void appointment::makeAppointment(int NZOK, Lekar* doc)
+{
+//zapazva purwiq svoboden
+
+/*int i;
+for (i = 0; doc->GetHours()[i] != 0 && i < 10; i++);
+if(i<10)
+{
+
+}*/
+
+     lekar = doc;
+
+     if (NZOK == 0)
+{
+     payment = 100;
+}
+     else payment = 5;
+     ZdravnaKasa = NZOK;
+}
+
+--------------------------------------------------------------------------------------------------------
+
+REGISTER HEADER FILE:::
+
+#pragma once
+#include "Lekar.h"
+#include "appointment.h"
+
+class Register
+{
+     appointment ExamsPerDay[50];
+     int count;
+     Lekar Lekari[5];
+public:
+     Register();
+     void print();
+     void AddAppointment(char EGN[], Lekar* le, int nzok, char name[]);
+     int SearchFreeAppointment(Lekar* le);
+     void SumAllAppointments();
+};
+
+----------------------------------------------------------------------------------------------------------------
+
+REGISTER CPP:::
+
+#include "Register.h"
+#include <iostream>
+#include <string.h>
+
+Register::Register()
+{
+     count = 0;
+}
+
+void Register::print()
+{
+     for (int i = 0; i < count; i++)
+{
+     ExamsPerDay[i].print();
+}
+}
+
+void Register::AddAppointment(char EGN[], Lekar* le, int nzok, char name[])
+{
+     int ind = SearchFreeAppointment(le);
+     if (ind != -1)
+     {
+          le->GetHours()[ind] = 1;
+          ExamsPerDay[count].SetExamination(ind + 7);
+          ExamsPerDay[count].makeAppointment(nzok, le);
+          ExamsPerDay[count].SetNameEGN(name, EGN);
+          count++;
+     }
+
+     else printf("Nqma svoboden chas za tozi lekar ili nqma takuw lekar");
+
+}
+
+int Register::SearchFreeAppointment(Lekar *le)
+{
+     //namira purwiq svoboden chas za konkreten lekar
+     int i;
+     for (i = 0; le->GetHours()[i] != 0 && i < 10; i++);
+     if (i < 10)
+     {
+          return i;
+     }
+     else return -1;
+}
+
+void Register::SumAllAppointments()
+{
+     int i;
+     float sum=0;
+     for (i = 0; i < count; i++)
+     {
+          sum += ExamsPerDay[i].GetPayment();
+     }
+          printf("All payment sum is: %.2f", sum);
+}
+
+------------------------------------------------------------------------------------------------------------
+
+
+REGISTRATURA MAIN.CPP:::
+
+// Registratura.cpp : This file contains the 'main' function. Program execution begins and ends there.
+//
+
+#include "appointment.h"
+#include "Lekar.h"
+#include "Register.h"
+#include <iostream>
+
+int main() {
+    // Create working hours (0 = free, 1 = taken)
+    int hours1[10] = {0}; // all hours free
+    int hours2[10] = {0}; // all hours free
+
+    // Create doctors
+    Lekar doc1((char*)"Dr. Ivanov", (char*)"Cardiologist", 101, hours1);
+    Lekar doc2((char*)"Dr. Petrov", (char*)"Dermatologist", 102, hours2);
+
+    // Create register
+    Register reg;
+
+    // Add appointments
+    reg.AddAppointment((char*)"1234567890", &doc1, 1, (char*)"Georgi Ivanov"); // with insurance
+    reg.AddAppointment((char*)"2345678901", &doc1, 0, (char*)"Maria Petrova"); // without insurance
+    reg.AddAppointment((char*)"3456789012", &doc2, 1, (char*)"Petar Dimitrov"); // with insurance
+
+    
+// Print all appointments
+    printf_s("\n--- All Appointments ---\n");
+    reg.print();
+
+    // Show total payments
+    printf_s("\n--- Total Payments ---\n");
+    reg.SumAllAppointments();
+
+    return 0;
+}
+
